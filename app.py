@@ -92,6 +92,6 @@ def detect():
 
 
 if __name__ == "__main__":
-    load_model()
+    print(f"[app] Starting — model will load on first request")
     print(f"[app] http://0.0.0.0:{PORT}")
     app.run(host="0.0.0.0", port=PORT, debug=False)
