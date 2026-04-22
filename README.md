@@ -1,84 +1,142 @@
 # Mealy
 
-Food image classification system built with MobileNetV2 transfer learning on the Food-101 dataset. Mealy takes a photograph of food and returns the category name with a confidence score across 101 classes. It was built as the assessed artefact for CMS22202 Computer Vision and AI at Ravensbourne University London.
+Point a camera at your food and Mealy tells you what it is.
 
-## Setup
+Mealy is a food image classifier built with MobileNetV2 transfer learning on the Food-101 dataset. It recognises 101 food categories, returns a confidence score, and estimates calories per serving. There is a browser UI with a live camera feed, a terminal demo that runs on your webcam, and a REST API you can call from anything.
+
+Built for CMS22202 Computer Vision and AI at Ravensbourne University London.
+
+---
+
+## How it works
+
+A frame comes in from the webcam or an uploaded image. It gets resized to 224x224 and normalised. The model runs inference across five overlapping regions of the image, so it can spot more than one food in a single frame. Each detection above 25% confidence comes back with a label, a confidence score, and a calorie estimate.
+
+The model is MobileNetV2 pretrained on ImageNet, fine-tuned on Food-101 using two-phase transfer learning. Training ran on Kaggle (P100 GPU, ~45 minutes). Final test accuracy is 37.6% across 101 classes. Random chance would be 1%, so the model is about 37x better than guessing.
+
+---
+
+## Getting started
 
 ```bash
+git clone https://github.com/Kowsyke/Mealy.git
+cd Mealy
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**Model weights** are not included in this repository (file size). Download `mealy_model.keras` from the Kaggle training run and place it at:
+The model weights are too large for git. Download `mealy_model.keras` from the Kaggle training run and drop it here:
 
 ```
 keggle/mealy_model.keras
 ```
 
-## Running the API
+---
+
+## Running it
+
+**Start the API first.** Everything else depends on it.
 
 ```bash
-python3 app.py
+venv_archive/bin/python3 app.py
 ```
 
-The Flask API starts on port 5001. Test it:
+The server starts on port 5001. The model loads on the first request (takes about 30 seconds on CPU).
+
+**Open the browser UI:**
+
+```bash
+firefox ui/index.html
+```
+
+Allow camera access when prompted. Hit **Scan Frame** to classify what the camera sees, or toggle **Auto Scan** to keep classifying every two seconds.
+
+**Run the terminal demo:**
+
+```bash
+venv_archive/bin/python3 demo.py
+```
+
+OpenCV overlay on your webcam feed. Press `A` to toggle auto-scan, `Q` to quit.
+
+**Run evaluation:**
+
+```bash
+venv_archive/bin/python3 evaluate.py
+```
+
+---
+
+## API
+
+```
+GET  /health   system status
+POST /predict  single-region classification
+POST /detect   multi-region detection (up to 4 foods per frame)
+```
+
+Example:
 
 ```bash
 curl http://localhost:5001/health
-curl -X POST http://localhost:5001/predict -F "file=@your_food_image.jpg"
-```
 
-The `/predict` endpoint returns JSON:
+curl -X POST http://localhost:5001/predict \
+     -F "file=@pizza.jpg"
+```
 
 ```json
 {
   "prediction": "pizza",
-  "confidence": 0.847,
-  "top5": [{"class": "pizza", "confidence": 0.847}, ...]
+  "confidence": 0.71,
+  "calories": 285,
+  "top5": [
+    {"class": "pizza", "confidence": 0.71},
+    {"class": "bruschetta", "confidence": 0.09}
+  ]
 }
 ```
 
-## Running the Webcam Demo
+---
 
-The API must be running first. Then:
+## Results
 
-```bash
-python3 demo.py
-```
+| Metric | Value |
+|--------|-------|
+| Test accuracy | 37.6% |
+| Test loss | 2.6215 |
+| Classes | 101 |
+| Training images | 11,099 |
+| Random baseline | ~1% |
 
-Opens the webcam at `/dev/video0`, classifies frames every second, and overlays the result on screen. Press **Q** to quit.
+The main constraint was image resolution. The Kaggle training dataset stores images at 64x64 pixels, which get upsampled to 224x224. State of the art on full-resolution Food-101 reaches above 90%.
 
-## Running Evaluation
+---
 
-```bash
-python3 evaluate.py
-```
-
-If the HDF5 test file (`keggle/food_c101_n10099_r64x64x3.h5`) is present, it runs full metrics and generates a confusion matrix. Otherwise it writes the known results from the Kaggle training run to `claude/metrics_report.md`.
-
-**Known results:** 37.6% test accuracy, 2.6215 test loss.
-
-## Project Structure
+## Project structure
 
 ```
-Mealy/
-├── app.py              # Flask API (/predict, /health) — port 5001
-├── demo.py             # OpenCV webcam demo
-├── evaluate.py         # Metrics, confusion matrix
-├── preprocess.py       # Shared preprocessing (224×224, /255)
-├── class_names.py      # 101 Food-101 class labels
-├── load_data.py        # tf.data pipeline for Food-101
-├── model.py            # MobileNetV2 + classification head
-├── train.py            # Local training script
-├── kaggle_train.py     # Kaggle/HDF5 training script
-├── keggle/             # Trained model weights (not in git)
-├── food-101/           # Dataset (not in git)
-└── requirements.txt
+app.py            Flask API (port 5001)
+demo.py           OpenCV webcam demo
+detect.py         Multi-region inference engine
+preprocess.py     Shared image preprocessing
+class_names.py    101 Food-101 class labels
+calories.py       Calorie estimates per class
+evaluate.py       Metrics and confusion matrix
+model.py          MobileNetV2 model definition
+train.py          Local training script
+ui/index.html     Browser UI
+keggle/           Model weights (not in git)
+food-101/         Dataset (not in git)
+requirements.txt  Dependencies
 ```
 
-## Academic Context
+---
 
-Module: CMS22202 Computer Vision and AI, Level 5, 20 credits
-University: Ravensbourne University London
-GitHub: https://github.com/Kowsyke/Mealy
+## Tech stack
+
+Python 3.13, TensorFlow 2.21, Keras 3.13, OpenCV 4.13, Flask 3.1, scikit-learn 1.8
+
+---
+
+*CMS22202 Computer Vision and AI, Level 5, Ravensbourne University London*
