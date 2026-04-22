@@ -28,9 +28,11 @@ runs/
 saved_models/
 keggle/
 
-# Claude workspace - internal only
+# Internal workspace - never committed
+internal/
 claude/
 CLAUDE.md
+COMPLETION.md
 
 # Environment
 .env

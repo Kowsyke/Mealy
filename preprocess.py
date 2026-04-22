@@ -7,30 +7,32 @@ IMAGE_SIZE = 224
 INPUT_SHAPE = (IMAGE_SIZE, IMAGE_SIZE, 3)
 
 
-def _resize_norm(image: tf.Tensor) -> tf.Tensor:
-    image = tf.image.resize(image, [IMAGE_SIZE, IMAGE_SIZE])
-    return tf.cast(image, tf.float32) / 255.0
+def preprocess_array(img_array):
+    img = tf.image.resize(img_array, [IMAGE_SIZE, IMAGE_SIZE])
+    img = tf.cast(img, tf.float32) / 255.0
+    return img.numpy()
 
 
-def preprocess_path(path: str) -> tf.Tensor:
+def preprocess_pil(pil_image):
+    arr = np.array(pil_image.convert("RGB"))
+    return preprocess_array(arr)
+
+
+def preprocess_bytes(image_bytes):
+    img = tf.image.decode_image(image_bytes, channels=3, expand_animations=False)
+    img = tf.image.resize(img, [IMAGE_SIZE, IMAGE_SIZE])
+    img = tf.cast(img, tf.float32) / 255.0
+    return np.expand_dims(img.numpy(), axis=0)
+
+
+def preprocess_cv2_frame(frame_bgr):
+    import cv2
+    rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+    return preprocess_array(rgb)
+
+
+def preprocess_path(path):
     raw = tf.io.read_file(path)
     image = tf.image.decode_jpeg(raw, channels=3)
-    return _resize_norm(image)
-
-
-def preprocess_array(img_array: np.ndarray) -> np.ndarray:
-    img = Image.fromarray(img_array.astype(np.uint8)).convert("RGB")
-    img = img.resize((IMAGE_SIZE, IMAGE_SIZE))
-    return np.array(img, dtype=np.float32) / 255.0
-
-
-def preprocess_pil(pil_image) -> np.ndarray:
-    img = pil_image.convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE))
-    return np.array(img, dtype=np.float32) / 255.0
-
-
-def preprocess_bytes(image_bytes: bytes) -> np.ndarray:
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    img = img.resize((IMAGE_SIZE, IMAGE_SIZE))
-    arr = np.array(img, dtype=np.float32) / 255.0
-    return arr[np.newaxis]  # (1, 224, 224, 3)
+    image = tf.image.resize(image, [IMAGE_SIZE, IMAGE_SIZE])
+    return (tf.cast(image, tf.float32) / 255.0).numpy()

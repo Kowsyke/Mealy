@@ -1,98 +1,119 @@
-# Mealy - food classifier
-# webcam demo using OpenCV, sends frames to flask API and overlays predictions
-import cv2
+import os
 import time
-import requests
+import cv2
 import numpy as np
+import tensorflow as tf
+from preprocess import preprocess_cv2_frame
+from detect import detect_foods, total_calories, get_regions
 
-CONFIG = {
-    "camera_index":  0,
-    "api_url":       "http://127.0.0.1:5001/predict",
-    "predict_every": 1.0,   # seconds between API calls
-    "font":          cv2.FONT_HERSHEY_SIMPLEX,
-    "frame_width":   640,
-    "frame_height":  480,
-}
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "keggle", "mealy_model.keras")
+CAMERA_INDEX = 0
+PREDICT_INTERVAL = 1.5
+FONT = cv2.FONT_HERSHEY_SIMPLEX
 
-
-def send_frame(frame: np.ndarray) -> dict | None:
-    _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
-    try:
-        resp = requests.post(
-            CONFIG["api_url"],
-            files={"file": ("frame.jpg", buffer.tobytes(), "image/jpeg")},
-            timeout=3,
-        )
-        if resp.status_code == 200:
-            return resp.json()
-    except requests.exceptions.RequestException:
-        pass
-    return None
+ORANGE = (0, 115, 249)
+AMBER  = (11, 158, 245)
+GREEN  = (85, 197, 34)
+WHITE  = (245, 245, 245)
+MUTED  = (112, 113, 107)
+BLACK  = (10, 10, 10)
 
 
-def draw_overlay(frame: np.ndarray, result: dict | None, fps: float) -> np.ndarray:
+def draw_region_box(frame, name, h, w):
+    mh, mw = h // 2, w // 2
+    boxes = {
+        'full':         (0, 0, w, h),
+        'top_left':     (0, 0, mw, mh),
+        'top_right':    (mw, 0, w, mh),
+        'bottom_left':  (0, mh, mw, h),
+        'bottom_right': (mw, mh, w, h),
+    }
+    if name not in boxes:
+        return
+    x1, y1, x2, y2 = boxes[name]
+    cv2.rectangle(frame, (x1+2, y1+2), (x2-2, y2-2), ORANGE, 1)
+
+
+def draw_overlay(frame, detections, fps, auto_mode):
     h, w = frame.shape[:2]
-    # Semi-transparent background bar at bottom
+
+    for d in detections:
+        draw_region_box(frame, d['region'], h, w)
+
+    # Bottom panel
+    panel_h = min(80 + 22 * len(detections), 160)
     overlay = frame.copy()
-    cv2.rectangle(overlay, (0, h - 90), (w, h), (0, 0, 0), -1)
-    frame = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
+    cv2.rectangle(overlay, (0, h - panel_h), (w, h), BLACK, -1)
+    frame = cv2.addWeighted(overlay, 0.75, frame, 0.25, 0)
 
-    if result:
-        label = result.get("class", "?").replace("_", " ").title()
-        conf  = result.get("confidence", 0.0)
-        cv2.putText(frame, f"{label}", (10, h - 55), CONFIG["font"], 0.9, (255, 255, 255), 2)
-        cv2.putText(frame, f"{conf*100:.1f}%", (10, h - 20), CONFIG["font"], 0.7, (0, 255, 120), 2)
-        # Top-5 in small text top-left
-        top5 = result.get("top5", [])
-        for i, item in enumerate(top5[1:4], start=2):
-            cls  = item["class"].replace("_", " ").title()
-            c    = item["confidence"]
-            cv2.putText(frame, f"{i}. {cls} {c*100:.0f}%", (10, 20 + (i-2)*22),
-                        CONFIG["font"], 0.45, (200, 200, 200), 1)
+    if detections:
+        for i, d in enumerate(detections):
+            label = d['class'].replace('_', ' ').title()
+            conf  = int(d['confidence'] * 100)
+            kcal  = d['calories']
+            y = h - panel_h + 20 + i * 22
+            cv2.putText(frame, f"{label}", (10, y), FONT, 0.45, WHITE, 1, cv2.LINE_AA)
+            cv2.putText(frame, f"{conf}%", (180, y), FONT, 0.38, AMBER, 1, cv2.LINE_AA)
+            cv2.putText(frame, f"{kcal} kcal", (225, y), FONT, 0.38, ORANGE, 1, cv2.LINE_AA)
+
+        total = total_calories(detections)
+        cv2.putText(frame, f"TOTAL: {total} kcal", (w - 200, h - 12), FONT, 0.5, ORANGE, 1, cv2.LINE_AA)
     else:
-        cv2.putText(frame, "Waiting for prediction...", (10, h - 35),
-                    CONFIG["font"], 0.6, (180, 180, 180), 1)
+        cv2.putText(frame, "NO FOOD DETECTED", (10, h - panel_h + 24), FONT, 0.5, MUTED, 1, cv2.LINE_AA)
 
-    cv2.putText(frame, f"FPS: {fps:.1f}", (w - 100, 25), CONFIG["font"], 0.6, (0, 220, 255), 2)
-    cv2.putText(frame, "Press Q to quit", (w - 160, h - 10), CONFIG["font"], 0.45, (150, 150, 150), 1)
+    # Top bar
+    cv2.putText(frame, "MEALY", (10, 22), FONT, 0.6, ORANGE, 2, cv2.LINE_AA)
+    mode_text = "AUTO" if auto_mode else "MANUAL"
+    cv2.putText(frame, mode_text, (10, 40), FONT, 0.32, AMBER, 1, cv2.LINE_AA)
+    cv2.putText(frame, f"FPS {fps:.0f}", (w - 85, 22), FONT, 0.45, GREEN, 1, cv2.LINE_AA)
+    cv2.putText(frame, "Q:quit  A:auto", (w - 140, h - panel_h - 6), FONT, 0.32, MUTED, 1, cv2.LINE_AA)
+
     return frame
 
 
 def main():
-    cap = cv2.VideoCapture(CONFIG["camera_index"])
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH,  CONFIG["frame_width"])
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT,  CONFIG["frame_height"])
+    print("[demo] Loading model...")
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print("[demo] Model ready. Opening camera...")
+
+    cap = cv2.VideoCapture(CAMERA_INDEX)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 854)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     if not cap.isOpened():
-        print(f"[demo] Could not open /dev/video{CONFIG['camera_index']}")
+        print(f"[demo] Cannot open /dev/video{CAMERA_INDEX}")
         return
 
-    print("[demo] Starting. Press Q to quit.")
+    print("[demo] Running. Press Q to quit, A to toggle auto-scan.")
     last_predict = 0.0
-    last_result  = None
-    prev_time    = time.time()
+    last_detections = []
+    prev_time = time.time()
+    auto_mode = False
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("[demo] Frame capture failed.")
+            print("[demo] Frame read failed.")
             break
 
-        # FPS
         now = time.time()
         fps = 1.0 / max(now - prev_time, 1e-6)
         prev_time = now
 
-        # Predict on interval
-        if now - last_predict >= CONFIG["predict_every"]:
-            last_result  = send_frame(frame)
+        if auto_mode or (now - last_predict >= PREDICT_INTERVAL):
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            last_detections = detect_foods(model, rgb)
             last_predict = now
 
-        frame = draw_overlay(frame, last_result, fps)
-        cv2.imshow("Mealy - Food Recognition", frame)
+        frame = draw_overlay(frame, last_detections, fps, auto_mode)
+        cv2.imshow("Mealy", frame)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
             break
+        elif key == ord('a'):
+            auto_mode = not auto_mode
+            print(f"[demo] Auto-scan {'ON' if auto_mode else 'OFF'}")
 
     cap.release()
     cv2.destroyAllWindows()
