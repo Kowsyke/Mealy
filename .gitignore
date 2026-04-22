@@ -26,6 +26,7 @@ datasets/
 *.tflite
 runs/
 saved_models/
+keggle/
 
 # Claude workspace - internal only
 claude/

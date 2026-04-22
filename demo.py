@@ -1,6 +1,5 @@
 # Mealy - food classifier
 # webcam demo using OpenCV, sends frames to flask API and overlays predictions
-# developed with help from Claude AI
 import cv2
 import time
 import requests

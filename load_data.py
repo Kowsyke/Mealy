@@ -1,6 +1,5 @@
 # Mealy - food classifier
 # tf.data pipeline for Food-101, reads train/test splits from meta/
-# developed with help from Claude AI
 import os
 import tensorflow as tf
 from preprocess import preprocess_path, IMAGE_SIZE
