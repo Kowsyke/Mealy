@@ -1,3 +1,7 @@
+# Mealy — model evaluator
+# Loads the trained model and runs it against the Food-101 test split,
+# then prints accuracy and loss and saves a confusion matrix chart
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
