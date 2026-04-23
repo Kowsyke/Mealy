@@ -1,6 +1,6 @@
-# Mealy - food classifier
-# MobileNetV2 transfer learning model, 101-class output
-# developed with help from Claude AI
+# Mealy — neural network definition
+# MobileNetV2 base (frozen, pretrained on ImageNet) + custom classification head
+# Outputs probabilities across 101 food classes via softmax
 import tensorflow as tf
 from preprocess import INPUT_SHAPE
 
