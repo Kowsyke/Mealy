@@ -909,6 +909,17 @@ function renderDetections(dets, total) {
     return;
   }
 
+  dets = dets.filter(d => d.confidence >= 0.60);
+
+  if (!dets.length) {
+    list.innerHTML = '';
+    empty.textContent = 'Nothing confident enough — try moving closer';
+    list.appendChild(empty);
+    sub.textContent = 'no match above 60%';
+    document.getElementById('total-num').textContent = '—';
+    return;
+  }
+
   if (empty.parentNode) empty.parentNode.removeChild(empty);
   list.innerHTML = '';
   const src = mode === 'combined' ? ' across both databases' : '';
