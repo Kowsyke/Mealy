@@ -68,7 +68,6 @@ def make_dataset(split: str, augment_train: bool = True, dataset_dir: str = None
     if split == "train" and augment_train:
         ds = ds.map(lambda img, lbl: (augment(img), lbl), num_parallel_calls=CONFIG["autotune"])
 
-    ds = ds.cache() if split == "test" else ds
     ds = ds.shuffle(1000) if split == "train" else ds
     ds = ds.batch(CONFIG["batch_size"]).prefetch(CONFIG["autotune"])
     return ds
