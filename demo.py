@@ -61,6 +61,8 @@ def draw_overlay(frame, detections, fps, auto_mode):
     else:
         cv2.putText(frame, "NO FOOD DETECTED", (10, h - panel_h + 24), FONT, 0.5, MUTED, 1, cv2.LINE_AA)
 
+    cv2.putText(frame, "github.com/Kowsyke", (10, h - 4), FONT, 0.28, MUTED, 1, cv2.LINE_AA)
+
     # Top bar
     cv2.putText(frame, "MEALY", (10, 22), FONT, 0.6, ORANGE, 2, cv2.LINE_AA)
     mode_text = "AUTO" if auto_mode else "MANUAL"

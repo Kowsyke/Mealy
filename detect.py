@@ -19,7 +19,12 @@ def get_regions(frame_rgb):
     }
 
 
-def detect_foods(model, frame_rgb):
+def detect_foods(model, frame_rgb, class_names=None, calorie_fn=None):
+    if class_names is None:
+        class_names = CLASS_NAMES
+    if calorie_fn is None:
+        calorie_fn = get_calories
+
     regions = get_regions(frame_rgb)
     all_preds = {}
 
@@ -31,12 +36,12 @@ def detect_foods(model, frame_rgb):
         top_conf = float(probs[top_idx])
 
         if top_conf >= CONFIDENCE_THRESHOLD:
-            label = CLASS_NAMES[top_idx]
+            label = class_names[top_idx]
             if label not in all_preds or all_preds[label]['confidence'] < top_conf:
                 all_preds[label] = {
                     'class': label,
                     'confidence': top_conf,
-                    'calories': get_calories(label),
+                    'calories': calorie_fn(label),
                     'region': region_name,
                 }
 

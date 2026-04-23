@@ -3,634 +3,737 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MEALY — Food Recognition System</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <title>Mealy</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0a;
-      --surface: #111111;
-      --surface-2: #1a1a1a;
-      --accent-warm: #f97316;
-      --accent-hot: #ef4444;
-      --accent-cool: #22c55e;
-      --accent-amber: #f59e0b;
-      --text-primary: #f5f5f5;
-      --text-muted: #6b7280;
-      --border: rgba(249, 115, 22, 0.2);
-      --glow: rgba(249, 115, 22, 0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --glass-bg: rgba(255,255,255,0.06);
+      --glass-border: rgba(255,255,255,0.10);
+      --glass-strong: rgba(255,255,255,0.10);
+      --accent: #ff8c42;
+      --accent-dim: rgba(255,140,66,0.18);
+      --accent-glow: rgba(255,140,66,0.25);
+      --green: #34d399;
+      --green-dim: rgba(52,211,153,0.15);
+      --red: #f87171;
+      --amber: #fbbf24;
+      --text: rgba(255,255,255,0.92);
+      --text-2: rgba(255,255,255,0.55);
+      --text-3: rgba(255,255,255,0.28);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
     }
 
     html, body {
       height: 100%;
-      background: var(--bg);
-      color: var(--text-primary);
-      font-family: 'JetBrains Mono', monospace;
+      background: #0c0c10;
+      color: var(--text);
+      font-family: var(--font);
       overflow: hidden;
     }
 
+    /* ── ambient background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 0%, rgba(255,140,66,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(99,102,241,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── layout ── */
     .app {
+      position: relative;
+      z-index: 1;
       display: grid;
       grid-template-columns: 200px 1fr 280px;
-      grid-template-rows: 1fr 36px;
+      grid-template-rows: 1fr;
       height: 100vh;
-      gap: 0;
+      gap: 1px;
+      background: rgba(255,255,255,0.04);
     }
 
-    /* ---- LEFT PANEL ---- */
-    .panel-left {
-      grid-row: 1;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 20px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    /* ── glass panel base ── */
+    .panel {
+      background: rgba(15,15,20,0.75);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       overflow: hidden;
     }
 
-    .logo-block { flex-shrink: 0; }
-    .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent-warm); letter-spacing: 3px; }
-    .logo-sub { font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 2px; text-transform: uppercase; }
+    /* ── LEFT PANEL ── */
+    .panel-left {
+      padding: 28px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
 
-    .divider { height: 1px; background: var(--border); }
+    .brand { flex-shrink: 0; }
+    .brand-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .brand-name span { color: var(--accent); }
+    .brand-sub {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text-3);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
 
-    .clock { font-size: 20px; font-weight: 500; color: var(--text-primary); letter-spacing: 1px; }
-    .clock-label { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; }
+    .sep {
+      height: 1px;
+      background: var(--glass-border);
+      flex-shrink: 0;
+    }
 
-    .status-section { flex-shrink: 0; }
-    .section-label { font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .section-title {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 12px;
+    }
 
-    .status-row { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; font-size: 10px; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .dot-ok { background: var(--accent-cool); box-shadow: 0 0 6px var(--accent-cool); }
-    .dot-warn { background: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
-    .dot-err { background: var(--accent-hot); box-shadow: 0 0 6px var(--accent-hot); }
-    .dot-idle { background: var(--text-muted); }
-    .status-key { color: var(--text-muted); min-width: 48px; }
-    .status-val { color: var(--text-primary); font-weight: 500; }
+    /* status pills */
+    .status-list { display: flex; flex-direction: column; gap: 8px; }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      transition: background var(--transition);
+    }
+    .indicator {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .ind-ok    { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .ind-warn  { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+    .ind-err   { background: var(--red);   box-shadow: 0 0 8px var(--red); }
+    .ind-idle  { background: rgba(255,255,255,0.2); }
+    .status-key { font-size: 11px; font-weight: 500; color: var(--text-2); flex: 1; }
+    .status-val { font-size: 10px; font-weight: 500; color: var(--text); }
 
-    .stats-section { flex-shrink: 0; }
-    .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 10px; }
-    .stat-key { color: var(--text-muted); }
-    .stat-val { color: var(--accent-amber); font-weight: 700; }
+    /* model toggle */
+    .model-group { display: flex; flex-direction: column; gap: 6px; }
+    .model-btn {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--text-2);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all var(--transition);
+      line-height: 1.3;
+    }
+    .model-btn:hover { background: var(--glass-strong); color: var(--text); }
+    .model-btn.active {
+      background: var(--accent-dim);
+      border-color: rgba(255,140,66,0.35);
+      color: var(--accent);
+    }
+    .model-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+    .model-btn.active .model-badge { color: rgba(255,140,66,0.7); }
 
-    /* ---- CENTER PANEL ---- */
+    /* session stats */
+    .stats-list { display: flex; flex-direction: column; gap: 8px; }
+    .stat-item { display: flex; justify-content: space-between; align-items: center; }
+    .stat-key { font-size: 11px; color: var(--text-2); }
+    .stat-val { font-size: 12px; font-weight: 600; color: var(--text); }
+
+    /* ── CENTER PANEL ── */
     .panel-center {
-      grid-row: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
-      gap: 14px;
-      position: relative;
+      gap: 20px;
+      padding: 24px;
     }
 
-    .camera-wrap {
+    .camera-container {
       position: relative;
       width: 100%;
-      max-width: 840px;
+      max-width: 900px;
       aspect-ratio: 16/9;
+      border-radius: var(--radius);
+      overflow: hidden;
       background: #000;
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03),
+        0 32px 64px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.06);
     }
-
-    /* Corner bracket decoration */
-    .camera-wrap::before, .camera-wrap::after,
-    .corner-br::before, .corner-br::after {
-      content: '';
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-color: var(--accent-warm);
-      border-style: solid;
-      z-index: 10;
-    }
-    .camera-wrap::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
-    .camera-wrap::after  { top: 0; right: 0; border-width: 2px 2px 0 0; }
-    .corner-br::before   { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
-    .corner-br::after    { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
 
     video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
     }
 
-    /* Crosshair */
-    .crosshair {
+    .cam-idle {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+    }
+    .cam-idle-icon {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--glass-strong);
+      border: 1px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .cam-idle p { font-size: 12px; color: var(--text-2); font-weight: 400; }
+    .cam-idle.hidden { display: none; }
+
+    /* live badge */
+    .cam-live-badge {
       position: absolute;
-      inset: 0;
+      top: 14px; left: 14px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--green);
+      display: flex; align-items: center; gap: 5px;
+      letter-spacing: 0.5px;
+    }
+    .cam-live-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    .cam-res {
+      position: absolute;
+      top: 14px; right: 14px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      font-size: 10px;
+      color: var(--text-2);
+    }
+
+    /* scanning overlay */
+    .scan-overlay {
+      position: absolute; inset: 0;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--accent);
+      opacity: 0;
       pointer-events: none;
-      z-index: 5;
+      transition: opacity 0.2s;
     }
-    .crosshair::before {
-      content: '';
-      position: absolute;
-      left: 50%; top: 0; bottom: 0;
-      width: 1px;
-      background: linear-gradient(to bottom, transparent, rgba(249,115,22,0.3) 30%, rgba(249,115,22,0.3) 70%, transparent);
-    }
-    .crosshair::after {
-      content: '';
-      position: absolute;
-      top: 50%; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(to right, transparent, rgba(249,115,22,0.3) 30%, rgba(249,115,22,0.3) 70%, transparent);
+    .scan-overlay.active { opacity: 1; animation: scanPulse 1.2s ease-in-out infinite; }
+    @keyframes scanPulse {
+      0%,100% { border-color: var(--accent); box-shadow: inset 0 0 20px rgba(255,140,66,0.06); }
+      50% { border-color: var(--amber); box-shadow: inset 0 0 30px rgba(251,191,36,0.10); }
     }
 
-    /* Scan line */
-    .scan-line {
-      position: absolute;
-      left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(to right, transparent, rgba(249,115,22,0.6), transparent);
-      z-index: 6;
-      animation: scan 3s linear infinite;
-      pointer-events: none;
+    /* ── controls ── */
+    .controls {
+      display: flex; gap: 12px; align-items: center;
     }
-    .scan-line.fast { animation-duration: 0.8s; }
-    @keyframes scan {
-      0% { top: 0; }
-      100% { top: 100%; }
-    }
-
-    /* Live feed label */
-    .feed-label {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 6px 10px;
-      background: rgba(0,0,0,0.65);
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 1.5px;
-      z-index: 7;
-      display: flex;
-      justify-content: space-between;
-    }
-    .feed-label span { color: var(--accent-warm); }
-
-    .camera-message {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: var(--text-muted);
-      font-size: 11px;
-      text-align: center;
-      padding: 20px;
-      z-index: 8;
-    }
-    .camera-message.hidden { display: none; }
-
-    .controls { display: flex; gap: 12px; align-items: center; }
 
     .btn-scan {
-      padding: 10px 32px;
-      border: 2px solid var(--accent-warm);
-      background: transparent;
-      color: var(--accent-warm);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      padding: 12px 40px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,140,66,0.4);
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
       cursor: pointer;
-      text-transform: uppercase;
-      transition: all 0.15s;
-      position: relative;
-      overflow: hidden;
+      transition: all var(--transition);
+      backdrop-filter: blur(8px);
     }
-    .btn-scan:hover:not(:disabled) { background: rgba(249,115,22,0.1); }
+    .btn-scan:hover:not(:disabled) {
+      background: rgba(255,140,66,0.25);
+      border-color: rgba(255,140,66,0.6);
+      box-shadow: 0 8px 24px rgba(255,140,66,0.2);
+      transform: translateY(-1px);
+    }
+    .btn-scan:active:not(:disabled) { transform: translateY(0); }
     .btn-scan:disabled { opacity: 0.3; cursor: not-allowed; }
-    .btn-scan.analyzing {
-      border-color: var(--accent-amber);
-      color: var(--accent-amber);
-      animation: pulse 0.6s ease-in-out infinite alternate;
+    .btn-scan.scanning {
+      background: rgba(251,191,36,0.15);
+      border-color: rgba(251,191,36,0.4);
+      color: var(--amber);
     }
-    @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 
     .btn-auto {
-      padding: 8px 16px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 1px;
+      padding: 11px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--text-2);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all var(--transition);
+      backdrop-filter: blur(8px);
     }
-    .btn-auto.active { border-color: var(--accent-cool); color: var(--accent-cool); }
+    .btn-auto:hover { background: var(--glass-strong); color: var(--text); }
+    .btn-auto.active {
+      background: var(--green-dim);
+      border-color: rgba(52,211,153,0.3);
+      color: var(--green);
+    }
 
-    /* ---- RIGHT PANEL ---- */
+    /* ── RIGHT PANEL ── */
     .panel-right {
-      grid-row: 1;
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      padding: 16px;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
 
-    .detections-header {
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: var(--accent-warm);
-      text-transform: uppercase;
-      margin-bottom: 14px;
+    .det-header {
+      padding: 24px 20px 16px;
       flex-shrink: 0;
     }
+    .det-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+    .det-sub {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
 
-    .detections-list {
+    .det-scroll {
       flex: 1;
       overflow-y: auto;
+      padding: 0 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
-    .detections-list::-webkit-scrollbar { width: 3px; }
-    .detections-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .det-scroll::-webkit-scrollbar { width: 0; }
 
-    .no-detection {
-      color: var(--text-muted);
-      font-size: 10px;
+    .empty-msg {
       text-align: center;
-      margin-top: 40px;
-      letter-spacing: 1px;
+      color: var(--text-3);
+      font-size: 12px;
+      padding-top: 48px;
+      font-weight: 400;
     }
 
-    .detection-card {
-      background: var(--surface-2);
-      border-left: 3px solid var(--accent-warm);
-      padding: 10px 12px;
-      animation: slideIn 0.25s ease-out;
+    /* detection card */
+    .det-card {
+      padding: 14px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      animation: cardIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      transition: background var(--transition);
     }
-    @keyframes slideIn {
-      from { transform: translateX(20px); opacity: 0; }
-      to   { transform: translateX(0);    opacity: 1; }
+    .det-card:hover { background: var(--glass-strong); }
+    @keyframes cardIn {
+      from { transform: translateY(10px) scale(0.97); opacity: 0; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
     }
 
-    .card-name {
-      font-family: 'Syne', sans-serif;
+    .det-name {
       font-size: 14px;
       font-weight: 600;
-      color: var(--accent-amber);
+      color: var(--text);
       text-transform: capitalize;
-      margin-bottom: 6px;
+      letter-spacing: -0.2px;
+      margin-bottom: 10px;
     }
 
-    .conf-bar-wrap { position: relative; height: 3px; background: rgba(255,255,255,0.06); margin-bottom: 6px; }
-    .conf-bar {
-      height: 100%;
-      background: var(--accent-warm);
-      transition: width 0.4s ease;
-    }
+    .conf-track { height: 3px; background: rgba(255,255,255,0.07); border-radius: 99px; margin-bottom: 10px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--amber)); transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
 
-    .card-meta { display: flex; justify-content: space-between; align-items: center; }
-    .card-conf { font-size: 11px; color: var(--text-muted); }
-    .card-conf span { color: var(--accent-warm); font-weight: 700; }
-    .card-kcal { font-size: 16px; font-weight: 700; color: var(--accent-warm); }
-    .card-kcal small { font-size: 9px; color: var(--text-muted); }
+    .det-footer { display: flex; justify-content: space-between; align-items: center; }
+    .det-conf { font-size: 11px; color: var(--text-3); }
+    .det-conf strong { color: var(--text-2); font-weight: 500; }
+    .det-kcal { font-size: 18px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .det-kcal small { font-size: 9px; font-weight: 400; color: var(--text-3); margin-left: 1px; }
 
-    .region-badge {
-      display: inline-block;
-      margin-top: 5px;
-      padding: 1px 6px;
-      border: 1px solid var(--border);
-      font-size: 8px;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .total-section {
+    /* total block */
+    .total-block {
       flex-shrink: 0;
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 2px solid var(--accent-warm);
+      margin: 14px 16px 20px;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
     }
-    .total-label { font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
-    .total-number { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--text-primary); line-height: 1; }
-    .total-unit { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; margin-top: 2px; }
+    .total-lbl { font-size: 9px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+    .total-num { font-size: 38px; font-weight: 700; color: var(--text); letter-spacing: -1.5px; line-height: 1; }
+    .total-unit { font-size: 10px; color: var(--text-3); margin-top: 4px; }
 
-    /* ---- STATUS BAR ---- */
-    .status-bar {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      background: #080808;
-      border-top: 1px solid var(--border);
+    /* ── footer / status bar ── */
+    .footer-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 30px;
+      background: rgba(10,10,14,0.85);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--glass-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 1px;
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 400;
+      z-index: 100;
     }
-    .status-bar .center { color: var(--accent-warm); font-weight: 700; letter-spacing: 2px; }
-    .status-bar .api-ok { color: var(--accent-cool); }
-    .status-bar .api-err { color: var(--accent-hot); }
+    .footer-bar .api-ok { color: var(--green); }
+    .footer-bar .api-err { color: var(--red); }
+    .footer-bar .center { color: var(--text-2); font-weight: 500; }
+
+    /* scroll hack so footer doesn't cover content */
+    .panel-right { padding-bottom: 30px; }
+    .panel-center { padding-bottom: 52px; }
+    .panel-left { padding-bottom: 38px; }
   </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- LEFT -->
-  <aside class="panel-left">
-    <div class="logo-block">
-      <div class="logo">MEALY</div>
-      <div class="logo-sub">food recognition system</div>
+  <!-- ── LEFT ── -->
+  <aside class="panel panel-left">
+    <div class="brand">
+      <div class="brand-name">me<span>a</span>ly</div>
+      <div class="brand-sub">food recognition</div>
     </div>
 
-    <div class="divider"></div>
+    <div class="sep"></div>
 
     <div>
-      <div class="clock-label">local time</div>
-      <div class="clock" id="clock">00:00:00</div>
+      <div class="section-title">System</div>
+      <div class="status-list">
+        <div class="status-item">
+          <span class="indicator ind-idle" id="ind-api"></span>
+          <span class="status-key">api</span>
+          <span class="status-val" id="sv-api">—</span>
+        </div>
+        <div class="status-item">
+          <span class="indicator ind-idle" id="ind-cam"></span>
+          <span class="status-key">camera</span>
+          <span class="status-val" id="sv-cam">—</span>
+        </div>
+        <div class="status-item">
+          <span class="indicator ind-idle" id="ind-food"></span>
+          <span class="status-key">food model</span>
+          <span class="status-val" id="sv-food">—</span>
+        </div>
+        <div class="status-item">
+          <span class="indicator ind-idle" id="ind-fruit"></span>
+          <span class="status-key">fruit model</span>
+          <span class="status-val" id="sv-fruit">—</span>
+        </div>
+      </div>
     </div>
 
-    <div class="divider"></div>
+    <div class="sep"></div>
 
-    <div class="status-section">
-      <div class="section-label">System</div>
-      <div class="status-row">
-        <span class="dot dot-warn" id="dot-model"></span>
-        <span class="status-key">model</span>
-        <span class="status-val" id="val-model">loading</span>
-      </div>
-      <div class="status-row">
-        <span class="dot dot-idle" id="dot-api"></span>
-        <span class="status-key">api</span>
-        <span class="status-val" id="val-api">checking</span>
-      </div>
-      <div class="status-row">
-        <span class="dot dot-idle" id="dot-cam"></span>
-        <span class="status-key">camera</span>
-        <span class="status-val" id="val-cam">waiting</span>
+    <div>
+      <div class="section-title">Model</div>
+      <div class="model-group">
+        <button class="model-btn active" id="mbtn-food" onclick="setMode('food')">
+          Food · 101 classes
+          <br><span class="model-badge">MobileNetV2 · 37.6% acc</span>
+        </button>
+        <button class="model-btn" id="mbtn-fruit" onclick="setMode('fruit')">
+          Fruit + Veg · 36 classes
+          <br><span class="model-badge">Fine-tuned · 96.7% acc</span>
+        </button>
+        <button class="model-btn" id="mbtn-combined" onclick="setMode('combined')">
+          Combined · 137 classes
+          <br><span class="model-badge">Both models · cross-DB</span>
+        </button>
       </div>
     </div>
 
-    <div class="divider"></div>
+    <div class="sep"></div>
 
-    <div class="stats-section">
-      <div class="section-label">Session</div>
-      <div class="stat-row"><span class="stat-key">frames</span><span class="stat-val" id="stat-frames">0</span></div>
-      <div class="stat-row"><span class="stat-key">foods detected</span><span class="stat-val" id="stat-foods">0</span></div>
-      <div class="stat-row"><span class="stat-key">avg confidence</span><span class="stat-val" id="stat-conf">--</span></div>
+    <div>
+      <div class="section-title">Session</div>
+      <div class="stats-list">
+        <div class="stat-item">
+          <span class="stat-key">Scans</span>
+          <span class="stat-val" id="ss-scans">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-key">Items found</span>
+          <span class="stat-val" id="ss-items">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-key">Avg confidence</span>
+          <span class="stat-val" id="ss-conf">—</span>
+        </div>
+      </div>
     </div>
   </aside>
 
-  <!-- CENTER -->
-  <main class="panel-center">
-    <div class="camera-wrap" id="cam-wrap">
-      <div class="corner-br"></div>
+  <!-- ── CENTER ── -->
+  <main class="panel panel-center">
+    <div class="camera-container">
       <video id="video" autoplay muted playsinline></video>
-      <div class="crosshair"></div>
-      <div class="scan-line" id="scan-line"></div>
-      <div class="feed-label">
-        <span>LIVE FEED</span>
-        <span>/dev/video0</span>
-        <span id="fps-label">-- fps</span>
+
+      <div class="cam-idle" id="cam-idle">
+        <div class="cam-idle-icon">📷</div>
+        <p>Awaiting camera access</p>
       </div>
-      <div class="camera-message" id="cam-msg">
-        <div>AWAITING CAMERA ACCESS</div>
-        <div style="font-size:9px;margin-top:6px">allow camera permissions to continue</div>
+
+      <div class="cam-live-badge" id="live-badge" style="display:none">
+        <span class="dot"></span> LIVE
       </div>
+      <div class="cam-res" id="cam-res" style="display:none"></div>
+      <div class="scan-overlay" id="scan-overlay"></div>
     </div>
+
     <div class="controls">
-      <button class="btn-scan" id="btn-scan" disabled onclick="triggerScan()">SCAN FRAME</button>
-      <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">AUTO SCAN</button>
+      <button class="btn-scan" id="btn-scan" disabled onclick="scan()">Scan Frame</button>
+      <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">Auto</button>
     </div>
   </main>
 
-  <!-- RIGHT -->
-  <aside class="panel-right">
-    <div class="detections-header">DETECTIONS</div>
-    <div class="detections-list" id="detections-list">
-      <div class="no-detection" id="no-detection">awaiting scan</div>
+  <!-- ── RIGHT ── -->
+  <aside class="panel panel-right">
+    <div class="det-header">
+      <div class="det-title">Detections</div>
+      <div class="det-sub" id="det-sub">awaiting scan</div>
     </div>
-    <div class="total-section">
-      <div class="total-label">Total estimated</div>
-      <div class="total-number" id="total-number">0</div>
-      <div class="total-unit">kcal per serving</div>
+    <div class="det-scroll" id="det-list">
+      <div class="empty-msg" id="empty-msg">Point your camera at food and hit Scan</div>
+    </div>
+    <div class="total-block">
+      <div class="total-lbl">Total kcal</div>
+      <div class="total-num" id="total-num">—</div>
+      <div class="total-unit">estimated per serving</div>
     </div>
   </aside>
-
-  <!-- STATUS BAR -->
-  <footer class="status-bar">
-    <span>MobileNetV2 / 101 classes / 37.6% acc</span>
-    <span class="center" id="mode-label">IDLE</span>
-    <span id="api-status-label" class="api-err">localhost:5001 offline</span>
-  </footer>
-
 </div>
 
-<script>
-const API = 'http://localhost:5001';
-const video = document.getElementById('video');
-const btnScan = document.getElementById('btn-scan');
-const btnAuto = document.getElementById('btn-auto');
-const scanLine = document.getElementById('scan-line');
-const modeLbl = document.getElementById('mode-label');
+<!-- fixed footer bar -->
+<footer class="footer-bar">
+  <span id="fb-model">Food · 101 classes · 37.6%</span>
+  <span class="center" id="fb-state">idle</span>
+  <span style="display:flex;gap:12px;align-items:center"><a href="http://56.228.34.22" target="_blank" style="color:var(--text-3);text-decoration:none;font-size:9px;opacity:.7">kowsite</a><span id="fb-api" class="api-err">api offline</span></span>
+</footer>
 
+<script>
+const API = (window.location.origin.startsWith('http://localhost') || window.location.protocol === 'file:')
+  ? 'http://localhost:5001' : window.location.origin;
+
+let mode = 'food';
 let autoMode = false;
 let autoTimer = null;
-let apiOk = false;
-let camOk = false;
-let frameCount = 0;
-let totalFoodsDetected = 0;
-let confSum = 0;
-let confCount = 0;
-let lastFrameTime = performance.now();
+let apiOk = false, camOk = false;
+let scans = 0, items = 0, confSum = 0, confN = 0;
 
-// Clock
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toTimeString().slice(0,8);
-}
-setInterval(updateClock, 1000);
-updateClock();
+const video = document.getElementById('video');
+const btnScan = document.getElementById('btn-scan');
 
-// FPS tracking
-setInterval(() => {
-  const now = performance.now();
-  const elapsed = (now - lastFrameTime) / 1000;
-  lastFrameTime = now;
-}, 1000);
-
-// Camera
+// ── camera ───────────────────────────────────────────────────
 async function startCamera() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
     video.srcObject = stream;
     video.addEventListener('loadedmetadata', () => {
-      document.getElementById('cam-msg').classList.add('hidden');
-      setStatus('cam', 'active', 'ok');
+      document.getElementById('cam-idle').classList.add('hidden');
+      const badge = document.getElementById('live-badge');
+      const res   = document.getElementById('cam-res');
+      badge.style.display = 'flex';
+      res.style.display   = 'block';
+      res.textContent = video.videoWidth + ' × ' + video.videoHeight;
+      setInd('cam', 'on', 'ok');
       camOk = true;
-      updateScanBtn();
+      syncBtn();
     });
-
-    // FPS label
-    let fFrames = 0;
-    setInterval(() => {
-      document.getElementById('fps-label').textContent = fFrames + ' fps';
-      fFrames = 0;
-    }, 1000);
-    video.addEventListener('timeupdate', () => fFrames++);
-
-  } catch (err) {
-    setStatus('cam', 'denied', 'err');
-    document.getElementById('cam-msg').innerHTML =
-      '<div>CAMERA DENIED</div><div style="font-size:9px;margin-top:6px">allow camera in browser settings</div>';
+  } catch {
+    setInd('cam', 'denied', 'err');
   }
 }
 
-// API health check
+// ── health polling ────────────────────────────────────────────
 async function checkHealth() {
   try {
-    const r = await fetch(API + '/health', { signal: AbortSignal.timeout(2000) });
+    const r = await fetch(API + '/health', { signal: AbortSignal.timeout(2500) });
     const d = await r.json();
     apiOk = d.status === 'ok';
-    setStatus('api', apiOk ? 'connected' : 'error', apiOk ? 'ok' : 'err');
-    setStatus('model', apiOk ? 'loaded' : 'error', apiOk ? 'ok' : 'warn');
-    document.getElementById('api-status-label').textContent = 'localhost:5001 online';
-    document.getElementById('api-status-label').className = 'api-ok';
+    setInd('api', 'online', 'ok');
+    setInd('food', d.food_model === 'loaded' ? 'loaded' : 'standby',
+      d.food_model === 'loaded' ? 'ok' : 'idle');
+    setInd('fruit', d.fruit_model === 'loaded' ? 'loaded' : 'standby',
+      d.fruit_model === 'loaded' ? 'ok' : 'idle');
+    document.getElementById('fb-api').textContent = 'api online';
+    document.getElementById('fb-api').className = 'api-ok';
   } catch {
     apiOk = false;
-    setStatus('api', 'offline', 'err');
-    document.getElementById('api-status-label').textContent = 'localhost:5001 offline';
-    document.getElementById('api-status-label').className = 'api-err';
+    setInd('api', 'offline', 'err');
+    document.getElementById('fb-api').textContent = 'api offline';
+    document.getElementById('fb-api').className = 'api-err';
   }
-  updateScanBtn();
+  syncBtn();
 }
 
-function setStatus(key, val, state) {
-  const dot = document.getElementById('dot-' + key);
-  const valEl = document.getElementById('val-' + key);
-  if (valEl) valEl.textContent = val;
-  if (dot) {
-    dot.className = 'dot';
-    if (state === 'ok')   dot.classList.add('dot-ok');
-    else if (state === 'warn') dot.classList.add('dot-warn');
-    else if (state === 'err')  dot.classList.add('dot-err');
-    else dot.classList.add('dot-idle');
-  }
+function setInd(key, val, state) {
+  const el  = document.getElementById('ind-' + key);
+  const sv  = document.getElementById('sv-' + key);
+  if (sv) sv.textContent = val;
+  if (el) el.className = 'indicator ind-' +
+    (state === 'ok' ? 'ok' : state === 'err' ? 'err' : state === 'warn' ? 'warn' : 'idle');
 }
 
-function updateScanBtn() {
-  btnScan.disabled = !(apiOk && camOk);
+function syncBtn() { btnScan.disabled = !(apiOk && camOk); }
+
+// ── model switch ──────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  ['food','fruit','combined'].forEach(k =>
+    document.getElementById('mbtn-' + k).classList.toggle('active', k === m)
+  );
+  const labels = {
+    food:     'Food · 101 classes · 37.6%',
+    fruit:    'Fruit + Veg · 36 classes · 96.7%',
+    combined: 'Combined · 137 classes · both databases',
+  };
+  document.getElementById('fb-model').textContent = labels[m];
+  document.getElementById('fb-state').textContent = 'idle';
 }
 
-// Scan
-async function triggerScan() {
+// ── scan ──────────────────────────────────────────────────────
+async function scan() {
   if (!apiOk || !camOk) return;
-  setAnalyzing(true);
+  btnScan.textContent = 'Scanning…';
+  btnScan.classList.add('scanning');
+  document.getElementById('scan-overlay').classList.add('active');
+  document.getElementById('fb-state').textContent = 'scanning';
 
   const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 640;
+  canvas.width  = video.videoWidth  || 640;
   canvas.height = video.videoHeight || 480;
   canvas.getContext('2d').drawImage(video, 0, 0);
 
   canvas.toBlob(async (blob) => {
     const form = new FormData();
     form.append('file', blob, 'frame.jpg');
+    const ep = mode === 'food' ? '/detect' : mode === 'fruit' ? '/detect_fruit' : '/detect_combined';
     try {
-      const r = await fetch(API + '/detect', { method: 'POST', body: form });
+      const r = await fetch(API + ep, { method: 'POST', body: form });
       const d = await r.json();
-      frameCount++;
-      document.getElementById('stat-frames').textContent = frameCount;
+      scans++;
+      document.getElementById('ss-scans').textContent = scans;
       renderDetections(d.detections || [], d.total_calories || 0);
     } catch (e) {
       console.error('[scan]', e);
     }
-    setAnalyzing(false);
-  }, 'image/jpeg', 0.9);
+    btnScan.textContent = 'Scan Frame';
+    btnScan.classList.remove('scanning');
+    document.getElementById('scan-overlay').classList.remove('active');
+    document.getElementById('fb-state').textContent = autoMode ? 'auto' : 'idle';
+  }, 'image/jpeg', 0.92);
 }
 
-function setAnalyzing(on) {
-  if (on) {
-    btnScan.classList.add('analyzing');
-    btnScan.textContent = 'ANALYZING';
-    scanLine.classList.add('fast');
-    modeLbl.textContent = 'ANALYZING';
-  } else {
-    btnScan.classList.remove('analyzing');
-    btnScan.textContent = 'SCAN FRAME';
-    scanLine.classList.remove('fast');
-    modeLbl.textContent = autoMode ? 'AUTO SCAN' : 'LIVE';
-  }
-}
+function renderDetections(dets, total) {
+  const list  = document.getElementById('det-list');
+  const empty = document.getElementById('empty-msg');
+  const sub   = document.getElementById('det-sub');
 
-function renderDetections(detections, totalCal) {
-  const list = document.getElementById('detections-list');
-  const noEl = document.getElementById('no-detection');
-
-  if (!detections.length) {
+  if (!dets.length) {
     list.innerHTML = '';
-    list.appendChild(noEl);
-    noEl.textContent = 'no food detected';
-    document.getElementById('total-number').textContent = '0';
+    list.appendChild(empty);
+    empty.textContent = 'Nothing detected — try moving closer';
+    sub.textContent = 'no match above threshold';
+    document.getElementById('total-num').textContent = '—';
     return;
   }
 
-  noEl.remove();
+  if (empty.parentNode) empty.parentNode.removeChild(empty);
   list.innerHTML = '';
+  const src = mode === 'combined' ? ' across both databases' : '';
+  sub.textContent = dets.length + (dets.length === 1 ? ' item detected' : ' items detected') + src;
 
-  detections.forEach((d, i) => {
-    const name = d.class.replace(/_/g, ' ');
-    const pct = Math.round(d.confidence * 100);
+  dets.forEach((d, i) => {
+    items++;
+    confSum += d.confidence;
+    confN++;
+    document.getElementById('ss-items').textContent = items;
+    document.getElementById('ss-conf').textContent  = Math.round((confSum / confN) * 100) + '%';
+
+    const pct  = Math.round(d.confidence * 100);
     const card = document.createElement('div');
-    card.className = 'detection-card';
-    card.style.animationDelay = (i * 0.07) + 's';
-    card.style.borderLeftColor = i === 0 ? 'var(--accent-warm)' : 'rgba(249,115,22,0.4)';
-
+    card.className = 'det-card';
+    card.style.animationDelay = (i * 0.06) + 's';
     card.innerHTML = `
-      <div class="card-name">${name}</div>
-      <div class="conf-bar-wrap"><div class="conf-bar" style="width:${pct}%"></div></div>
-      <div class="card-meta">
-        <div class="card-conf">conf <span>${pct}%</span></div>
-        <div class="card-kcal">${d.calories} <small>kcal</small></div>
+      <div class="det-name">${d.class.replace(/_/g,' ')}</div>
+      <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
+      <div class="det-footer">
+        <span class="det-conf"><strong>${pct}%</strong> confidence</span>
+        <span class="det-kcal">${d.calories}<small> kcal</small></span>
       </div>
-      <div class="region-badge">${d.region.replace(/_/g,' ')}</div>
     `;
     list.appendChild(card);
-
-    totalFoodsDetected++;
-    confSum += d.confidence;
-    confCount++;
   });
 
-  document.getElementById('stat-foods').textContent = totalFoodsDetected;
-  document.getElementById('stat-conf').textContent =
-    confCount ? Math.round((confSum / confCount) * 100) + '%' : '--';
-  document.getElementById('total-number').textContent = totalCal;
+  document.getElementById('total-num').textContent = total > 0 ? total : '—';
 }
 
-// Auto scan
+// ── auto scan ─────────────────────────────────────────────────
 function toggleAuto() {
   autoMode = !autoMode;
-  btnAuto.classList.toggle('active', autoMode);
-  btnAuto.textContent = autoMode ? 'AUTO: ON' : 'AUTO SCAN';
-  modeLbl.textContent = autoMode ? 'AUTO SCAN' : 'LIVE';
-
+  const btn = document.getElementById('btn-auto');
+  btn.classList.toggle('active', autoMode);
+  btn.textContent = autoMode ? 'Auto: On' : 'Auto';
+  document.getElementById('fb-state').textContent = autoMode ? 'auto' : 'idle';
   if (autoMode) {
-    autoTimer = setInterval(triggerScan, 2000);
+    autoTimer = setInterval(scan, 2000);
   } else {
     clearInterval(autoTimer);
     autoTimer = null;
   }
 }
 
-// Init
+// ── init ──────────────────────────────────────────────────────
 startCamera();
 checkHealth();
 setInterval(checkHealth, 5000);
