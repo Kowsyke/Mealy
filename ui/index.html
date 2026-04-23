@@ -412,17 +412,40 @@
 
     /* detection card */
     .det-card {
+      position: relative;
       padding: 14px 14px;
       border-radius: var(--radius-sm);
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       animation: cardIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
-      transition: background var(--transition);
+      transition: background var(--transition), opacity 0.18s, transform 0.18s;
     }
     .det-card:hover { background: var(--glass-strong); }
+    .det-card.removing { opacity: 0; transform: scale(0.95); pointer-events: none; }
     @keyframes cardIn {
       from { transform: translateY(10px) scale(0.97); opacity: 0; }
       to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .det-dismiss {
+      position: absolute;
+      top: 7px; left: 8px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.06);
+      color: var(--text-3);
+      font-size: 10px;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+      padding: 0;
+    }
+    .det-dismiss:hover {
+      background: rgba(248,113,113,0.18);
+      border-color: rgba(248,113,113,0.35);
+      color: var(--red);
     }
 
     .det-name {
@@ -825,6 +848,10 @@ function setMode(m) {
 // ── scan ──────────────────────────────────────────────────────
 async function scan() {
   if (!apiOk || !camOk) return;
+
+  // clear board immediately so every scan feels fresh
+  clearDetections();
+
   btnScan.textContent = 'Scanning…';
   btnScan.classList.add('scanning');
   document.getElementById('scan-overlay').classList.add('active');
@@ -875,8 +902,8 @@ function renderDetections(dets, total) {
 
   if (!dets.length) {
     list.innerHTML = '';
-    list.appendChild(empty);
     empty.textContent = 'Nothing detected — try moving closer';
+    list.appendChild(empty);
     sub.textContent = 'no match above threshold';
     document.getElementById('total-num').textContent = '—';
     return;
@@ -897,9 +924,11 @@ function renderDetections(dets, total) {
     const pct  = Math.round(d.confidence * 100);
     const card = document.createElement('div');
     card.className = 'det-card';
+    card.dataset.calories = d.calories || 0;
     card.style.animationDelay = (i * 0.06) + 's';
     card.innerHTML = `
-      <div class="det-name">${d.class.replace(/_/g,' ')}</div>
+      <button class="det-dismiss" title="Remove" onclick="dismissCard(this)">✕</button>
+      <div class="det-name" style="padding-left:22px">${d.class.replace(/_/g,' ')}</div>
       <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
       <div class="det-footer">
         <span class="det-conf"><strong>${pct}%</strong> confidence</span>
@@ -909,8 +938,39 @@ function renderDetections(dets, total) {
     list.appendChild(card);
   });
 
-  // Show only the top-confidence item's calories, not a sum.
   document.getElementById('total-num').textContent = dets[0].calories || '—';
+}
+
+function clearDetections() {
+  const list  = document.getElementById('det-list');
+  const empty = document.getElementById('empty-msg');
+  list.innerHTML = '';
+  empty.textContent = 'Scanning…';
+  list.appendChild(empty);
+  document.getElementById('det-sub').textContent = 'scanning';
+  document.getElementById('total-num').textContent = '—';
+}
+
+function dismissCard(btn) {
+  const card = btn.closest('.det-card');
+  card.classList.add('removing');
+  setTimeout(() => {
+    card.remove();
+    const list      = document.getElementById('det-list');
+    const remaining = list.querySelectorAll('.det-card');
+    const sub       = document.getElementById('det-sub');
+    if (remaining.length === 0) {
+      const empty = document.getElementById('empty-msg');
+      empty.textContent = 'Point your camera at food and hit Scan';
+      list.appendChild(empty);
+      sub.textContent = 'awaiting scan';
+      document.getElementById('total-num').textContent = '—';
+    } else {
+      const src = mode === 'combined' ? ' across both databases' : '';
+      sub.textContent = remaining.length + (remaining.length === 1 ? ' item detected' : ' items detected') + src;
+      document.getElementById('total-num').textContent = remaining[0].dataset.calories || '—';
+    }
+  }, 180);
 }
 
 // ── auto scan ─────────────────────────────────────────────────
