@@ -778,7 +778,7 @@ function toggleZone() {
 // ── health polling ────────────────────────────────────────────
 async function checkHealth() {
   try {
-    const r = await fetch(API + '/health', { signal: AbortSignal.timeout(2500) });
+    const r = await fetch(API + '/health', { signal: AbortSignal.timeout(6000) });
     const d = await r.json();
     apiOk = d.status === 'ok';
     setInd('api', 'online', 'ok');

@@ -60,6 +60,7 @@ def _capture_loop() -> None:
             if ok:
                 with _frame_lock:
                     _frame_jpeg = jpeg.tobytes()
+            time.sleep(0.05)   # cap at ~20 FPS, leaves CPU headroom for Flask
         else:
             time.sleep(0.05)
 
