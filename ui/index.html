@@ -75,7 +75,9 @@
       padding: 28px 18px;
       display: flex;
       flex-direction: column;
-      gap: 28px;
+      gap: clamp(14px, 2.5vh, 28px);
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     .brand { flex-shrink: 0; }
@@ -135,6 +137,14 @@
     .status-key { font-size: 11px; font-weight: 500; color: var(--text-2); flex: 1; }
     .status-val { font-size: 10px; font-weight: 500; color: var(--text); }
 
+    /* camera toggle pill */
+    .cam-toggle {
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .cam-toggle:hover { background: var(--glass-strong); border-color: rgba(255,255,255,0.15); }
+
     /* model toggle */
     .model-group { display: flex; flex-direction: column; gap: 6px; }
     .model-btn {
@@ -185,7 +195,7 @@
     .camera-container {
       position: relative;
       width: 100%;
-      max-width: 900px;
+      max-width: min(900px, calc((100vh - 140px) * 16 / 9));
       aspect-ratio: 16/9;
       border-radius: var(--radius);
       overflow: hidden;
@@ -451,10 +461,10 @@
           <span class="status-key">api</span>
           <span class="status-val" id="sv-api">—</span>
         </div>
-        <div class="status-item">
+        <div class="status-item cam-toggle" onclick="toggleCamera()" title="Click to toggle camera">
           <span class="indicator ind-idle" id="ind-cam"></span>
           <span class="status-key">camera</span>
-          <span class="status-val" id="sv-cam">—</span>
+          <span class="status-val" id="sv-cam">off</span>
         </div>
         <div class="status-item">
           <span class="indicator ind-idle" id="ind-food"></span>
@@ -554,7 +564,7 @@
 <footer class="footer-bar">
   <span id="fb-model">Food · 101 classes · 37.6%</span>
   <span class="center" id="fb-state">idle</span>
-  <span style="display:flex;gap:14px;align-items:center"><a href="http://56.228.34.22" target="_blank" style="color:var(--accent);text-decoration:none;font-size:10px;font-weight:500;letter-spacing:.04em;opacity:.85">kowsite ↗</a><span id="fb-api" class="api-err">api offline</span></span>
+  <span style="display:flex;gap:14px;align-items:center"><a href="https://56-228-34-22.sslip.io" target="_blank" style="color:var(--accent);text-decoration:none;font-size:10px;font-weight:500;letter-spacing:.04em;opacity:.85">kowsite ↗</a><span id="fb-api" class="api-err">api offline</span></span>
 </footer>
 
 <script>
@@ -580,6 +590,7 @@ const btnScan = document.getElementById('btn-scan');
 
 // ── camera ───────────────────────────────────────────────────
 async function startCamera() {
+  setInd('cam', 'requesting…', 'warn');
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -597,10 +608,24 @@ async function startCamera() {
       camOk = true;
       syncBtn();
     });
-  } catch {
-    setInd('cam', 'denied', 'err');
+  } catch (err) {
+    setInd('cam', err.name === 'NotAllowedError' ? 'denied' : 'error', 'err');
   }
 }
+
+function stopCamera() {
+  const stream = video.srcObject;
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  video.srcObject = null;
+  document.getElementById('cam-idle').classList.remove('hidden');
+  document.getElementById('live-badge').style.display = 'none';
+  document.getElementById('cam-res').style.display = 'none';
+  setInd('cam', 'off', 'idle');
+  camOk = false;
+  syncBtn();
+}
+
+function toggleCamera() { camOk ? stopCamera() : startCamera(); }
 
 // ── health polling ────────────────────────────────────────────
 async function checkHealth() {
