@@ -1,4 +1,4 @@
-# Mealy — fruit and vegetable calorie table
+# Mealy: fruit and vegetable calorie table
 # Estimated kcal per average serving for each of the 36 fruit/veg categories
 
 FRUIT_CALORIE_MAP = {
