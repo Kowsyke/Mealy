@@ -1,4 +1,4 @@
-# Mealy — inference engine
+# Mealy: inference engine
 # Runs an image through the model, filters detections above the confidence threshold,
 # and returns ranked food predictions with confidence scores and calorie estimates
 
