@@ -1,4 +1,4 @@
-# Mealy — original training script
+# Mealy: original training script
 # Two-phase transfer learning: frozen base then fine-tune top layers
 # Use train_optimized.py for full-resolution training; this version is the first iteration
 import os
