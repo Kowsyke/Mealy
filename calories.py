@@ -1,3 +1,6 @@
+# Mealy — Food-101 calorie table
+# Estimated kcal per average serving for each of the 101 food categories
+
 CALORIE_MAP = {
     'apple_pie': 296,
     'baby_back_ribs': 340,
