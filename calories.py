@@ -1,4 +1,4 @@
-# Mealy — Food-101 calorie table
+# Mealy: Food-101 calorie table
 # Estimated kcal per average serving for each of the 101 food categories
 
 CALORIE_MAP = {
