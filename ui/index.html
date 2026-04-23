@@ -895,32 +895,33 @@ async function scan() {
   }, 'image/jpeg', 0.92);
 }
 
+function showEmpty(msg, subMsg) {
+  document.getElementById('det-list').innerHTML =
+    '<div class="empty-msg" id="empty-msg">' + msg + '</div>';
+  document.getElementById('det-sub').textContent = subMsg;
+  document.getElementById('total-num').textContent = '—';
+}
+
+function clearDetections() {
+  showEmpty('Scanning…', 'scanning');
+}
+
 function renderDetections(dets, total) {
-  const list  = document.getElementById('det-list');
-  const empty = document.getElementById('empty-msg');
-  const sub   = document.getElementById('det-sub');
+  const list = document.getElementById('det-list');
+  const sub  = document.getElementById('det-sub');
 
   if (!dets.length) {
-    list.innerHTML = '';
-    empty.textContent = 'Nothing detected — try moving closer';
-    list.appendChild(empty);
-    sub.textContent = 'no match above threshold';
-    document.getElementById('total-num').textContent = '—';
+    showEmpty('Nothing detected — try moving closer', 'no match above threshold');
     return;
   }
 
   dets = dets.filter(d => d.confidence >= 0.60);
 
   if (!dets.length) {
-    list.innerHTML = '';
-    empty.textContent = 'Nothing confident enough — try moving closer';
-    list.appendChild(empty);
-    sub.textContent = 'no match above 60%';
-    document.getElementById('total-num').textContent = '—';
+    showEmpty('Nothing confident enough — try moving closer', 'no match above 60%');
     return;
   }
 
-  if (empty.parentNode) empty.parentNode.removeChild(empty);
   list.innerHTML = '';
   const src = mode === 'combined' ? ' across both databases' : '';
   sub.textContent = dets.length + (dets.length === 1 ? ' item detected' : ' items detected') + src;
@@ -952,16 +953,6 @@ function renderDetections(dets, total) {
   document.getElementById('total-num').textContent = dets[0].calories || '—';
 }
 
-function clearDetections() {
-  const list  = document.getElementById('det-list');
-  const empty = document.getElementById('empty-msg');
-  list.innerHTML = '';
-  empty.textContent = 'Scanning…';
-  list.appendChild(empty);
-  document.getElementById('det-sub').textContent = 'scanning';
-  document.getElementById('total-num').textContent = '—';
-}
-
 function dismissCard(btn) {
   const card = btn.closest('.det-card');
   card.classList.add('removing');
@@ -971,11 +962,7 @@ function dismissCard(btn) {
     const remaining = list.querySelectorAll('.det-card');
     const sub       = document.getElementById('det-sub');
     if (remaining.length === 0) {
-      const empty = document.getElementById('empty-msg');
-      empty.textContent = 'Point your camera at food and hit Scan';
-      list.appendChild(empty);
-      sub.textContent = 'awaiting scan';
-      document.getElementById('total-num').textContent = '—';
+      showEmpty('Point your camera at food and hit Scan', 'awaiting scan');
     } else {
       const src = mode === 'combined' ? ' across both databases' : '';
       sub.textContent = remaining.length + (remaining.length === 1 ? ' item detected' : ' items detected') + src;
