@@ -1,6 +1,6 @@
-# Mealy - food classifier
-# two-phase training script (runs slow on CPU - use colab_train.py for GPU)
-# developed with help from Claude AI
+# Mealy — original training script
+# Two-phase transfer learning: frozen base then fine-tune top layers
+# Use train_optimized.py for full-resolution training; this version is the first iteration
 import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
