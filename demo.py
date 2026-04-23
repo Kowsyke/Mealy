@@ -1,4 +1,4 @@
-# Mealy — webcam demo
+# Mealy: webcam demo
 # Opens the laptop camera and runs live food recognition in a desktop window
 # using OpenCV. Press A to toggle auto-scan every 2 seconds, Q to quit.
 
