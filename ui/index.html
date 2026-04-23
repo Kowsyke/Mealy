@@ -260,6 +260,48 @@
       color: var(--text-2);
     }
 
+    /* ── veg scan zone ── */
+    .scan-zone {
+      position: absolute;
+      left: 12%; top: 8%;
+      width: 76%; height: 84%;
+      border: 1px solid rgba(52,211,153,0.25);
+      border-radius: 8px;
+      pointer-events: none;
+      display: none;
+      box-sizing: border-box;
+    }
+    .scan-zone.active { display: block; }
+    .sz-corner {
+      position: absolute;
+      width: 18px; height: 18px;
+      border-color: var(--green);
+      border-style: solid;
+    }
+    .sz-tl { top:-1px; left:-1px;  border-width:2px 0 0 2px; border-radius:5px 0 0 0; }
+    .sz-tr { top:-1px; right:-1px; border-width:2px 2px 0 0; border-radius:0 5px 0 0; }
+    .sz-bl { bottom:-1px; left:-1px;  border-width:0 0 2px 2px; border-radius:0 0 0 5px; }
+    .sz-br { bottom:-1px; right:-1px; border-width:0 2px 2px 0; border-radius:0 0 5px 0; }
+    .sz-label {
+      position: absolute;
+      top: 8px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px; font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--green);
+      opacity: 0.65;
+      white-space: nowrap;
+    }
+    .sz-ignore {
+      position: absolute;
+      bottom: 8px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px; font-weight: 500;
+      letter-spacing: 1px;
+      color: rgba(52,211,153,0.45);
+      white-space: nowrap;
+    }
+
     /* scanning overlay */
     .scan-overlay {
       position: absolute; inset: 0;
@@ -586,11 +628,20 @@
       </div>
       <div class="cam-res" id="cam-res" style="display:none"></div>
       <div class="scan-overlay" id="scan-overlay"></div>
+      <div class="scan-zone" id="scan-zone">
+        <div class="sz-corner sz-tl"></div>
+        <div class="sz-corner sz-tr"></div>
+        <div class="sz-corner sz-bl"></div>
+        <div class="sz-corner sz-br"></div>
+        <div class="sz-label">VEG ZONE · fruit + veg model active</div>
+        <div class="sz-ignore">faces and people outside zone ignored</div>
+      </div>
     </div>
 
     <div class="controls">
       <button class="btn-scan" id="btn-scan" disabled onclick="scan()">Scan Frame</button>
       <button class="btn-auto" id="btn-auto" onclick="toggleAuto()">Auto</button>
+      <button class="btn-auto" id="btn-zone" onclick="toggleZone()">Veg Zone</button>
     </div>
   </main>
 
@@ -604,9 +655,9 @@
       <div class="empty-msg" id="empty-msg">Point your camera at food and hit Scan</div>
     </div>
     <div class="total-block">
-      <div class="total-lbl">Total kcal</div>
+      <div class="total-lbl">Best match</div>
       <div class="total-num" id="total-num">—</div>
-      <div class="total-unit">estimated per serving</div>
+      <div class="total-unit">kcal · highest confidence pick</div>
     </div>
   </aside>
 </div>
@@ -633,6 +684,7 @@ const API = (() => {
 let mode = 'food';
 let autoMode = false;
 let autoTimer = null;
+let zoneMode = false;
 let apiOk = false, camOk = false;
 let scans = 0, items = 0, confSum = 0, confN = 0;
 
@@ -677,6 +729,17 @@ function stopCamera() {
 }
 
 function toggleCamera() { camOk ? stopCamera() : startCamera(); }
+
+// ── veg zone ──────────────────────────────────────────────────
+function toggleZone() {
+  zoneMode = !zoneMode;
+  const btn  = document.getElementById('btn-zone');
+  const zone = document.getElementById('scan-zone');
+  btn.classList.toggle('active', zoneMode);
+  btn.textContent = zoneMode ? 'Zone: On' : 'Veg Zone';
+  zone.classList.toggle('active', zoneMode);
+  if (zoneMode) setMode('fruit');
+}
 
 // ── health polling ────────────────────────────────────────────
 async function checkHealth() {
@@ -734,9 +797,22 @@ async function scan() {
   document.getElementById('fb-state').textContent = 'scanning';
 
   const canvas = document.createElement('canvas');
-  canvas.width  = video.videoWidth  || 640;
-  canvas.height = video.videoHeight || 480;
-  canvas.getContext('2d').drawImage(video, 0, 0);
+  if (zoneMode) {
+    const vRect = video.getBoundingClientRect();
+    const zRect = document.getElementById('scan-zone').getBoundingClientRect();
+    const sx = (video.videoWidth  || 1280) / vRect.width;
+    const sy = (video.videoHeight || 720)  / vRect.height;
+    const cx = Math.max(0, (zRect.left - vRect.left) * sx);
+    const cy = Math.max(0, (zRect.top  - vRect.top)  * sy);
+    const cw = Math.min(zRect.width  * sx, (video.videoWidth  || 1280) - cx);
+    const ch = Math.min(zRect.height * sy, (video.videoHeight || 720)  - cy);
+    canvas.width = cw; canvas.height = ch;
+    canvas.getContext('2d').drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
+  } else {
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+  }
 
   canvas.toBlob(async (blob) => {
     const form = new FormData();
@@ -799,7 +875,8 @@ function renderDetections(dets, total) {
     list.appendChild(card);
   });
 
-  document.getElementById('total-num').textContent = total > 0 ? total : '—';
+  // Show only the top-confidence item's calories, not a sum.
+  document.getElementById('total-num').textContent = dets[0].calories || '—';
 }
 
 // ── auto scan ─────────────────────────────────────────────────
