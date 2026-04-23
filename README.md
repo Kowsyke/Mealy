@@ -17,8 +17,8 @@ A frame is captured from the webcam and sent to a local Flask server. The server
 
 Two models run side by side:
 
-- **Food model** — MobileNetV2 trained on Food-101 (101 classes, 37.6% test accuracy)
-- **Fruit model** — MobileNetV2 fine-tuned on Fruits-360 (36 classes, 96.7% test accuracy)
+- **Food model:** MobileNetV2 trained on Food-101 (101 classes, 37.6% test accuracy)
+- **Fruit model:** MobileNetV2 fine-tuned on Fruits-360 (36 classes, 96.7% test accuracy)
 
 **Combined mode** runs both models on the same frame, merging results across 137 total categories.
 
@@ -45,15 +45,15 @@ pip install -r requirements.txt
 Model weights are not in git (too large). Download them and place here:
 
 ```
-models/food_model.keras    — Food-101 model
-models/fruit_model.keras   — Fruit/Veg model
+models/food_model.keras    (Food-101 model)
+models/fruit_model.keras   (Fruit/Veg model)
 ```
 
 ---
 
 ## Running it
 
-**Quickest — shell alias (if configured):**
+**Quickest option, using the shell alias (if configured):**
 ```bash
 mealy launch      # opens desktop app
 mealy api start   # starts background API
@@ -136,23 +136,23 @@ Random chance on 101 classes is ~1%. The food model is 37× better than chance.
 ## Project structure
 
 ```
-app.py               Flask server — handles image uploads and returns predictions
-model.py             Neural network definition — MobileNetV2 + classification head
+app.py               Flask server that handles image uploads and returns predictions
+model.py             Neural network: MobileNetV2 with a custom classification head
 train_optimized.py   Full-resolution two-phase training script for Food-101
 train.py             Original training script (first iteration)
-load_data.py         Data pipeline — loads, augments, and batches training images
-preprocess.py        Image preprocessor — resize to 224×224, normalise to [0, 1]
-detect.py            Inference engine — runs the model, filters by confidence
+load_data.py         Data pipeline that loads, augments, and batches training images
+preprocess.py        Image preprocessor: resizes to 224x224 and normalises pixels to 0-1
+detect.py            Inference engine that runs the model and filters by confidence
 calories.py          Calorie lookup table for 101 food classes
 fruit_calories.py    Calorie lookup table for 36 fruit/veg classes
 class_names.py       Ordered list of 101 Food-101 category names
 fruit_classes.py     Ordered list of 36 fruit/veg category names
-evaluate.py          Runs the test set and prints accuracy and confusion matrix
-demo.py              OpenCV webcam demo — runs in a terminal/desktop window
-launch.py            PyQt6 desktop launcher — opens Mealy in a native app window
+evaluate.py          Runs the test set and prints accuracy and a confusion matrix
+demo.py              OpenCV webcam demo that runs in a desktop window
+launch.py            PyQt6 desktop launcher that opens Mealy as a native app window
 main.py              Simple entry point
-start_api.sh         Shell script to start the API in a background tmux session
-ui/index.html        Browser frontend — camera, scan button, detection cards, kcal total
+start_api.sh         Shell script that starts the API in a background tmux session
+ui/index.html        Browser frontend with camera, scan button, detection cards and kcal total
 requirements.txt     All Python dependencies, pinned for reproducibility
 ```
 
@@ -166,4 +166,4 @@ EC2 (Ubuntu) · nginx 1.24 · Let's Encrypt · systemd · SSH reverse tunnel
 
 ---
 
-*CMS22202 Operating Systems & Cloud Computing — Ravensbourne University London*
+*CMS22202 Operating Systems & Cloud Computing at Ravensbourne University London*
