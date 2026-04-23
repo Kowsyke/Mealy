@@ -1,3 +1,7 @@
+# Mealy — inference engine
+# Runs an image through the model, filters detections above the confidence threshold,
+# and returns ranked food predictions with confidence scores and calorie estimates
+
 import numpy as np
 from preprocess import preprocess_array
 from class_names import CLASS_NAMES
