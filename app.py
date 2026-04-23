@@ -1,5 +1,5 @@
 """
-Mealy API — port 5001
+Mealy API, port 5001.
 TensorFlow is imported lazily inside load_*_model() so Flask starts immediately.
 Models load on the first request that needs them.
 """
@@ -10,7 +10,7 @@ from PIL import Image
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-# Non-TF imports — fast
+# Non-TF imports (all fast, no heavy loading here)
 from class_names import CLASS_NAMES
 from calories import get_calories
 from fruit_classes import FRUIT_CLASSES
@@ -38,7 +38,7 @@ def load_food_model():
         import tensorflow as tf
         print("[app] Loading food model…")
         food_model = tf.keras.models.load_model(FOOD_MODEL_PATH)
-        print(f"[app] Food model ready — {len(CLASS_NAMES)} classes")
+        print(f"[app] Food model ready ({len(CLASS_NAMES)} classes)")
 
 
 def load_fruit_model():
@@ -47,7 +47,7 @@ def load_fruit_model():
         import tensorflow as tf
         print("[app] Loading fruit model…")
         fruit_model = tf.keras.models.load_model(FRUIT_MODEL_PATH)
-        print(f"[app] Fruit model ready — {len(FRUIT_CLASSES)} classes")
+        print(f"[app] Fruit model ready ({len(FRUIT_CLASSES)} classes)")
 
 
 # ── serve UI ──────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ def detect_fruit():
                     "count": len(dets), "model": "fruit"})
 
 
-# ── combined endpoint — runs both models, merges results ──────────────────
+# combined endpoint: runs both models and merges the results
 @app.route("/detect_combined", methods=["POST"])
 def detect_combined():
     load_food_model()
@@ -193,6 +193,6 @@ def _decode_image(req):
 
 
 if __name__ == "__main__":
-    print(f"[app] Starting — models load on first request that needs them")
+    print(f"[app] Starting. Models load on the first request that needs them.")
     print(f"[app] UI → http://localhost:{PORT}")
     app.run(host="0.0.0.0", port=PORT, debug=False)
