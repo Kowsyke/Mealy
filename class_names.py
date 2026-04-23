@@ -1,6 +1,6 @@
-# Mealy — Food-101 class names
+# Mealy: Food-101 class names
 # Reads the 101 food category names from the dataset metadata file
-# and exposes them as CLASS_NAMES — used by the model, detector, and API
+# and exposes them as CLASS_NAMES, used by the model, detector, and API
 
 import os
 
