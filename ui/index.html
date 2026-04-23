@@ -435,6 +435,36 @@
     .footer-bar .api-err { color: var(--red); }
     .footer-bar .center { color: var(--text-2); font-weight: 500; }
 
+    /* kowsite link */
+    .kowsite-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,140,66,0.22);
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.2px;
+      transition: all var(--transition);
+    }
+    .kowsite-link:hover {
+      background: rgba(255,140,66,0.25);
+      border-color: rgba(255,140,66,0.5);
+      box-shadow: 0 4px 16px rgba(255,140,66,0.18);
+    }
+    .kowsite-link .ks-sub {
+      font-size: 9px;
+      font-weight: 400;
+      color: rgba(255,140,66,0.6);
+      display: block;
+      margin-top: 2px;
+    }
+    .kowsite-link .ks-arrow { font-size: 14px; opacity: 0.7; }
+
     /* scroll hack so footer doesn't cover content */
     .panel-right { padding-bottom: 30px; }
     .panel-center { padding-bottom: 52px; }
@@ -517,6 +547,18 @@
           <span class="stat-val" id="ss-conf">—</span>
         </div>
       </div>
+    </div>
+    <div class="sep"></div>
+
+    <div>
+      <div class="section-title">Dashboard</div>
+      <a href="https://56-228-34-22.sslip.io" target="_blank" class="kowsite-link">
+        <div>
+          <span>kowsite</span>
+          <span class="ks-sub">open dashboard ↗</span>
+        </div>
+        <span class="ks-arrow">↗</span>
+      </a>
     </div>
   </aside>
 
