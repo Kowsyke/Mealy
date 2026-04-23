@@ -558,8 +558,16 @@
 </footer>
 
 <script>
-const API = (window.location.origin.startsWith('http://localhost') || window.location.protocol === 'file:')
-  ? 'http://localhost:5001' : window.location.origin;
+const API = (() => {
+  if (window.location.protocol === 'file:' || window.location.hostname === 'localhost') {
+    return 'http://localhost:5001';
+  }
+  // served through Kowsite nginx at /mealy/ — keep prefix so calls hit /mealy/predict etc.
+  if (window.location.pathname.startsWith('/mealy')) {
+    return window.location.origin + '/mealy';
+  }
+  return window.location.origin;
+})();
 
 let mode = 'food';
 let autoMode = false;

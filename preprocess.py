@@ -35,4 +35,4 @@ def preprocess_path(path):
     raw = tf.io.read_file(path)
     image = tf.image.decode_jpeg(raw, channels=3)
     image = tf.image.resize(image, [IMAGE_SIZE, IMAGE_SIZE])
-    return (tf.cast(image, tf.float32) / 255.0).numpy()
+    return tf.cast(image, tf.float32) / 255.0

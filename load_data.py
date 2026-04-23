@@ -41,9 +41,9 @@ def augment(image: tf.Tensor) -> tf.Tensor:
     image = tf.image.random_brightness(image, max_delta=0.15)
     image = tf.image.random_contrast(image, lower=0.85, upper=1.15)
     image = tf.image.random_saturation(image, lower=0.85, upper=1.15)
-    # Random rotation via crop-and-resize
-    image = tf.keras.layers.RandomRotation(0.1)(tf.expand_dims(image, 0))[0]
-    image = tf.keras.layers.RandomZoom(0.1)(tf.expand_dims(image, 0))[0]
+    # Zoom simulation: random crop to 90% then resize back
+    image = tf.image.random_crop(image, size=[int(IMAGE_SIZE * 0.9), int(IMAGE_SIZE * 0.9), 3])
+    image = tf.image.resize(image, [IMAGE_SIZE, IMAGE_SIZE])
     image = tf.clip_by_value(image, 0.0, 1.0)
     return image
 
