@@ -670,6 +670,40 @@
 </footer>
 
 <script>
+(function () {
+  if (new URLSearchParams(location.search).get('_cam') !== 'ocv') return;
+  var SNAP = 'http://localhost:5002/frame.jpg';
+  var FPS  = 25;
+  var cv   = document.createElement('canvas');
+  cv.width = 1280; cv.height = 720;
+  var ctx  = cv.getContext('2d');
+  function poll() {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () { ctx.drawImage(img, 0, 0, 1280, 720); setTimeout(poll, Math.round(1000 / FPS)); };
+    img.onerror = function () { setTimeout(poll, 200); };
+    img.src = SNAP + '?t=' + Date.now();
+  }
+  poll();
+  function override() {
+    try {
+      if (navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia = function () {
+          return Promise.resolve(cv.captureStream(FPS));
+        };
+      } else {
+        Object.defineProperty(navigator, 'mediaDevices', {
+          value: { getUserMedia: function () { return Promise.resolve(cv.captureStream(FPS)); } },
+          writable: true, configurable: true
+        });
+      }
+    } catch (e) { console.warn('[cam-ocv] override error:', e); }
+  }
+  override();
+})();
+</script>
+
+<script>
 const API = (() => {
   if (window.location.protocol === 'file:' || window.location.hostname === 'localhost') {
     return 'http://localhost:5001';
